@@ -75,20 +75,17 @@ function App() {
                   onFramesExtracted={handleFramesExtracted}
                 />
               </section>
-
-              <section>
-                <ExportPanel frames={frames} />
-              </section>
             </div>
 
             <div className="w-[600px] flex flex-col bg-card">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
                   幻灯片管理
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
                     ({frames.length}张)
                   </span>
                 </h2>
+                <ExportPanel frames={frames} />
               </div>
               <div className="flex-1 overflow-hidden">
                 <FrameList frames={frames} onFramesChange={handleFramesChange} />

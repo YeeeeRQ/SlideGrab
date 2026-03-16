@@ -3,6 +3,14 @@ import { Download, Loader2, FileImage, FileArchive } from "lucide-react"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import type { FrameData } from "@/hooks/useSceneDetection"
 
 interface ExportPanelProps {
@@ -13,6 +21,7 @@ type ExportFormat = "png" | "jpg"
 type ExportMode = "zip" | "single"
 
 export function ExportPanel({ frames }: ExportPanelProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [format, setFormat] = useState<ExportFormat>("png")
   const [mode, setMode] = useState<ExportMode>("zip")
@@ -59,84 +68,95 @@ export function ExportPanel({ frames }: ExportPanelProps) {
     }
   }
 
-  if (selectedFrames.length === 0) {
-    return null
-  }
-
   return (
-    <div className="bg-muted rounded-lg p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <Download className="w-5 h-5" />
-        <h3 className="font-medium">导出设置</h3>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">图片格式</label>
-          <div className="flex gap-2">
-            <Button
-              variant={format === "png" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFormat("png")}
-              className="flex-1"
-            >
-              <FileImage className="w-4 h-4 mr-2" />
-              PNG
-            </Button>
-            <Button
-              variant={format === "jpg" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFormat("jpg")}
-              className="flex-1"
-            >
-              <FileImage className="w-4 h-4 mr-2" />
-              JPG
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-muted-foreground">导出方式</label>
-          <div className="flex gap-2">
-            <Button
-              variant={mode === "zip" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode("zip")}
-              className="flex-1"
-            >
-              <FileArchive className="w-4 h-4 mr-2" />
-              ZIP
-            </Button>
-            <Button
-              variant={mode === "single" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode("single")}
-              className="flex-1"
-            >
-              <FileImage className="w-4 h-4 mr-2" />
-              逐个
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <Button
-        onClick={handleExport}
-        disabled={isExporting || selectedFrames.length === 0}
-        className="w-full"
-      >
-        {isExporting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            导出中...
-          </>
-        ) : (
-          <>
-            <Download className="w-4 h-4 mr-2" />
-            导出 {selectedFrames.length} 张图片
-          </>
-        )}
+    <>
+      <Button onClick={() => setIsOpen(true)} disabled={selectedFrames.length === 0}>
+        <Download className="w-4 h-4 mr-2" />
+        导出 ({selectedFrames.length})
       </Button>
-    </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>导出设置</DialogTitle>
+            <DialogDescription>
+              已选择 {selectedFrames.length} 张图片
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">图片格式</label>
+              <div className="flex gap-2">
+                <Button
+                  variant={format === "png" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormat("png")}
+                  className="flex-1"
+                >
+                  <FileImage className="w-4 h-4 mr-2" />
+                  PNG
+                </Button>
+                <Button
+                  variant={format === "jpg" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormat("jpg")}
+                  className="flex-1"
+                >
+                  <FileImage className="w-4 h-4 mr-2" />
+                  JPG
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">导出方式</label>
+              <div className="flex gap-2">
+                <Button
+                  variant={mode === "zip" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("zip")}
+                  className="flex-1"
+                >
+                  <FileArchive className="w-4 h-4 mr-2" />
+                  ZIP
+                </Button>
+                <Button
+                  variant={mode === "single" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("single")}
+                  className="flex-1"
+                >
+                  <FileImage className="w-4 h-4 mr-2" />
+                  逐个
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleExport}
+              disabled={isExporting || selectedFrames.length === 0}
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  导出中...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  导出 {selectedFrames.length} 张
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
