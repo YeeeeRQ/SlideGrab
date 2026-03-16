@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useSceneDetection,
   type FrameData,
@@ -219,67 +220,56 @@ export function VideoPlayer({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
-        <button
-          onClick={() => setMode("manual")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === "manual"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <SkipForward className="w-4 h-4 inline-block mr-2" />
-          手动提取
-        </button>
-        <button
-          onClick={() => setMode("auto")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === "auto"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Zap className="w-4 h-4 inline-block mr-2" />
-          自动检测
-        </button>
-      </div>
+      <div className="flex items-center gap-2">
+        <Tabs value={mode} onValueChange={(v) => setMode(v as ExtractMode)} className="w-fit">
+          <TabsList>
+            <TabsTrigger value="manual" className="gap-2">
+              <SkipForward className="w-4 h-4" />
+              手动提取
+            </TabsTrigger>
+            <TabsTrigger value="auto" className="gap-2">
+              <Zap className="w-4 h-4" />
+              自动检测
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      <Button onClick={togglePlay} variant="outline" size="icon">
-        {isPlaying ? (
-          <Pause className="w-4 h-4" />
-        ) : (
-          <Play className="w-4 h-4" />
-        )}
-      </Button>
-
-      {mode === "manual" ? (
-        <Button onClick={extractCurrentFrame} variant="outline">
-          <SkipForward className="w-4 h-4 mr-2" />
-          提取当前帧
+        <Button onClick={togglePlay} variant="outline" size="icon">
+          {isPlaying ? (
+            <Pause className="w-4 h-4" />
+          ) : (
+            <Play className="w-4 h-4" />
+          )}
         </Button>
-      ) : (
-        <>
-          <div className="relative">
-            <Button
-              onClick={() => setShowSettings(!showSettings)}
-              variant={showSettings ? "default" : "outline"}
-            >
-              <Settings2 className="w-4 h-4 mr-2" />
-              {isExtracting ? "检测中..." : "自动检测"}
-              <ChevronDown
-                className={`w-4 h-4 ml-2 transition-transform ${
-                  showSettings ? "rotate-180" : ""
-                }`}
-              />
-            </Button>
-            {!isExtracting && extractTime !== null && (
-              <span className="ml-2 text-sm text-muted-foreground">
-                (用时 {(extractTime / 1000).toFixed(1)}s)
-              </span>
-            )}
 
-            {showSettings && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-background border rounded-lg shadow-lg z-10 p-4 space-y-4">
+        {mode === "manual" ? (
+          <Button onClick={extractCurrentFrame} variant="outline">
+            <SkipForward className="w-4 h-4 mr-2" />
+            提取当前帧
+          </Button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                onClick={() => setShowSettings(!showSettings)}
+                variant={showSettings ? "default" : "outline"}
+              >
+                <Settings2 className="w-4 h-4 mr-2" />
+                {isExtracting ? "检测中..." : "设置"}
+                <ChevronDown
+                  className={`w-4 h-4 ml-2 transition-transform ${
+                    showSettings ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              {!isExtracting && extractTime !== null && (
+                <span className="ml-2 text-sm text-muted-foreground">
+                  (用时 {(extractTime / 1000).toFixed(1)}s)
+                </span>
+              )}
+
+              {showSettings && (
+              <div className="absolute bottom-full right-0 mb-2 w-80 bg-background border rounded-lg shadow-lg z-10 p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold">检测设置</h3>
                   <button
@@ -415,8 +405,9 @@ export function VideoPlayer({
             />
             {isExtracting ? "检测中..." : "开始检测"}
           </Button>
-        </>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
