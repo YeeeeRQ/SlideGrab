@@ -38,20 +38,21 @@ export function useSceneDetection() {
     async (
       video: HTMLVideoElement,
       time: number,
-      width: number = 1920
+      width?: number
     ): Promise<string> => {
       return new Promise((resolve) => {
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")!
 
+        const targetWidth = width || video.videoWidth
         const aspectRatio = video.videoWidth / video.videoHeight
-        canvas.width = width
-        canvas.height = width / aspectRatio
+        canvas.width = targetWidth
+        canvas.height = targetWidth / aspectRatio
 
         video.currentTime = time
         video.onseeked = () => {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          resolve(canvas.toDataURL("image/jpeg", 0.9))
+          resolve(canvas.toDataURL("image/jpeg", 0.95))
         }
       })
     },
@@ -98,7 +99,7 @@ export function useSceneDetection() {
 
       const canvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d")!
-      const width = 1280
+      const width = video.videoWidth
       const aspectRatio = video.videoWidth / video.videoHeight
       canvas.width = width
       canvas.height = width / aspectRatio
@@ -143,7 +144,7 @@ export function useSceneDetection() {
             }
 
             if (!prevImageData || isNewScene) {
-              const dataUrl = canvas.toDataURL("image/jpeg", 0.85)
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.95)
               frames.push({
                 id: `frame-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 time,
