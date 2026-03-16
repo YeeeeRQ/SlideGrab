@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react"
-import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal } from "lucide-react"
+import { useState, useCallback, useMemo } from "react"
+import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 
@@ -8,12 +8,17 @@ interface FrameListProps {
   onFramesChange: (frames: FrameData[]) => void
 }
 
+type SortOrder = "asc" | "desc"
+type ViewMode = "grid" | "list"
+
 export function FrameList({ frames, onFramesChange }: FrameListProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
 
   const toggleFrame = (id: string) => {
     onFramesChange(
@@ -43,6 +48,15 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
 
   const selectedCount = frames.filter((f) => f.selected).length
 
+  const sortedFrames = useMemo(() => {
+    const sorted = [...frames].sort((a, b) => a.time - b.time)
+    return sortOrder === "asc" ? sorted : sorted.reverse()
+  }, [frames, sortOrder])
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
+  }
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
@@ -71,7 +85,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
   }
 
   const goToNext = () => {
-    if (previewIndex !== null && previewIndex < frames.length - 1) {
+    if (previewIndex !== null && previewIndex < sortedFrames.length - 1) {
       setPreviewIndex(previewIndex + 1)
       setScale(1)
       setPosition({ x: 0, y: 0 })
@@ -167,60 +181,88 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
               </Button>
             </div>
           </div>
-          {selectedCount < frames.length && (
-            <Button variant="ghost" size="sm" onClick={deleteUnselected}>
-              <Trash2 className="w-4 h-4 mr-2" />
-              删除未选择
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSortOrder}
+              title={sortOrder === "asc" ? "正序" : "倒序"}
+            >
+              <ArrowUpDown className="w-4 h-4 mr-1" />
+              {sortOrder === "asc" ? "正序" : "倒序"}
             </Button>
-          )}
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              title="网格视图"
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              title="列表视图"
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            {selectedCount < frames.length && (
+              <Button variant="ghost" size="sm" onClick={deleteUnselected}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                删除未选择
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {frames.map((frame, index) => (
-            <div
-              key={frame.id}
-              className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                frame.selected
-                  ? "border-primary"
-                  : "border-transparent opacity-60"
-              }`}
-              onClick={() => openPreview(index)}
-            >
-              <img
-                src={frame.dataUrl}
-                alt={`幻灯片 ${index + 1}`}
-                className="w-full aspect-video object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                  <span className="text-white text-xs">
-                    #{index + 1} {formatTime(frame.time)}
-                  </span>
-                  <ZoomIn className="w-4 h-4 text-white" />
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {sortedFrames.map((frame, index) => (
+              <div
+                key={frame.id}
+                className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                  frame.selected
+                    ? "border-primary"
+                    : "border-transparent opacity-60"
+                }`}
+                onClick={() => openPreview(index)}
+              >
+                <img
+                  src={frame.dataUrl}
+                  alt={`幻灯片 ${index + 1}`}
+                  className="w-full aspect-video object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                    <span className="text-white text-xs">
+                      #{index + 1} {formatTime(frame.time)}
+                    </span>
+                    <ZoomIn className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="absolute top-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => toggleFrame(frame.id)}
+                      className={`p-1.5 rounded-full ${
+                        frame.selected
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-white/80 hover:bg-white"
+                      }`}
+                    >
+                      {frame.selected ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <X className="w-3 h-3" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => deleteFrame(frame.id)}
+                      className="p-1.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-                <div className="absolute top-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => toggleFrame(frame.id)}
-                    className={`p-1.5 rounded-full ${
-                      frame.selected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-white/80 hover:bg-white"
-                    }`}
-                  >
-                    {frame.selected ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <X className="w-3 h-3" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => deleteFrame(frame.id)}
-                    className="p-1.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
               {frame.selected && (
                 <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                   <span className="text-xs text-primary-foreground font-medium">
@@ -231,6 +273,69 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
             </div>
           ))}
         </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+              <div className="col-span-1">#</div>
+              <div className="col-span-2">缩略图</div>
+              <div className="col-span-6">时间</div>
+              <div className="col-span-3 text-right">操作</div>
+            </div>
+            {sortedFrames.map((frame, index) => (
+              <div
+                key={frame.id}
+                className={`grid grid-cols-12 gap-4 px-4 py-2 items-center rounded-lg border-2 transition-all ${
+                  frame.selected
+                    ? "border-primary bg-primary/5"
+                    : "border-border opacity-70"
+                }`}
+              >
+                <div className="col-span-1 font-medium">{index + 1}</div>
+                <div className="col-span-2">
+                  <img
+                    src={frame.dataUrl}
+                    alt={`幻灯片 ${index + 1}`}
+                    className="w-24 h-14 object-cover rounded"
+                    onClick={() => openPreview(index)}
+                  />
+                </div>
+                <div className="col-span-6 flex items-center gap-4">
+                  <span className="text-sm">{formatTime(frame.time)}</span>
+                  <button
+                    onClick={() => openPreview(index)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    预览
+                  </button>
+                </div>
+                <div className="col-span-3 flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => toggleFrame(frame.id)}
+                    className={`p-2 rounded-full ${
+                      frame.selected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                    title={frame.selected ? "取消选择" : "选择"}
+                  >
+                    {frame.selected ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => deleteFrame(frame.id)}
+                    className="p-2 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    title="删除"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {previewIndex !== null && (
@@ -240,8 +345,8 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
         >
           <div className="flex items-center justify-between p-4 bg-black/50">
             <div className="text-white">
-              <span className="font-medium">{previewIndex + 1} / {frames.length}</span>
-              <span className="ml-4 text-white/70">{formatTime(frames[previewIndex].time)}</span>
+              <span className="font-medium">{previewIndex + 1} / {sortedFrames.length}</span>
+              <span className="ml-4 text-white/70">{formatTime(sortedFrames[previewIndex].time)}</span>
             </div>
             
             <div className="flex items-center gap-2">
@@ -319,7 +424,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
               style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
             >
               <img
-                src={frames[previewIndex].dataUrl}
+                src={sortedFrames[previewIndex].dataUrl}
                 alt={`幻灯片 ${previewIndex + 1}`}
                 style={{
                   transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
