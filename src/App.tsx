@@ -38,52 +38,57 @@ function App() {
         </div>
       </header>
 
-      <main className="container mx-auto py-6 px-4 space-y-8">
-        <section>
-          <h2 className="text-lg font-semibold mb-4">1. 上传视频</h2>
-          {!videoFile ? (
-            <VideoUploader onVideoSelect={handleVideoSelect} />
-          ) : (
-            <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium">{videoFile.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(videoFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              <button
-                onClick={handleReset}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                更换视频
-              </button>
-            </div>
-          )}
-        </section>
-
-        {videoFile && (
-          <>
+      <main className="container mx-auto py-6 px-4">
+        {!videoFile ? (
+          <div className="max-w-xl mx-auto">
             <section>
-              <h2 className="text-lg font-semibold mb-4">2. 提取幻灯片</h2>
-              <VideoPlayer
-                videoFile={videoFile}
-                onFramesExtracted={handleFramesExtracted}
-              />
+              <h2 className="text-lg font-semibold mb-4">上传视频</h2>
+              <VideoUploader onVideoSelect={handleVideoSelect} />
             </section>
-
-            {frames.length > 0 && (
+          </div>
+        ) : (
+          <div className="flex gap-6">
+            <div className="flex-1 space-y-6">
               <section>
-                <h2 className="text-lg font-semibold mb-4">
-                  3. 管理幻灯片 ({frames.length}张)
-                </h2>
-                <FrameList frames={frames} onFramesChange={handleFramesChange} />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">视频</h2>
+                  <button
+                    onClick={handleReset}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    更换视频
+                  </button>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium">{videoFile.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(videoFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
               </section>
-            )}
 
-            <section>
-              <ExportPanel frames={frames} />
-            </section>
-          </>
+              <section>
+                <h2 className="text-lg font-semibold mb-4">提取幻灯片</h2>
+                <VideoPlayer
+                  videoFile={videoFile}
+                  onFramesExtracted={handleFramesExtracted}
+                />
+              </section>
+
+              <section>
+                <ExportPanel frames={frames} />
+              </section>
+            </div>
+
+            <div className="w-[400px] flex-shrink-0">
+              <h2 className="text-lg font-semibold mb-4">
+                幻灯片管理 ({frames.length}张)
+              </h2>
+              <FrameList frames={frames} onFramesChange={handleFramesChange} />
+            </div>
+          </div>
         )}
       </main>
     </div>
