@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Download, Loader2, FileImage, FileArchive } from "lucide-react"
+import { Download, Loader2, FileImage, FileArchive, FileType } from "lucide-react"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
+import PptxGenJS from "pptxgenjs"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +18,7 @@ interface ExportPanelProps {
   frames: FrameData[]
 }
 
-type ExportFormat = "png" | "jpg"
+type ExportFormat = "png" | "jpg" | "pptx"
 type ExportMode = "zip" | "single"
 
 export function ExportPanel({ frames }: ExportPanelProps) {
@@ -34,7 +35,25 @@ export function ExportPanel({ frames }: ExportPanelProps) {
     setIsExporting(true)
 
     try {
-      if (mode === "zip") {
+      if (format === "pptx") {
+        const pptx = new PptxGenJS()
+        
+        for (let i = 0; i < selectedFrames.length; i++) {
+          const frame = selectedFrames[i]
+          const slide = pptx.addSlide()
+          
+          slide.addImage({
+            path: frame.dataUrl,
+            x: 0,
+            y: 0,
+            w: "100%",
+            h: "100%",
+            sizing: { type: "contain", w: 10, h: 7.5 },
+          })
+        }
+
+        pptx.writeFile({ fileName: `slides-${Date.now()}.pptx` })
+      } else if (mode === "zip") {
         const zip = new JSZip()
 
         for (let i = 0; i < selectedFrames.length; i++) {
@@ -86,7 +105,7 @@ export function ExportPanel({ frames }: ExportPanelProps) {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">图片格式</label>
+              <label className="text-sm font-medium">导出格式</label>
               <div className="flex gap-2">
                 <Button
                   variant={format === "png" ? "default" : "outline"}
@@ -106,32 +125,43 @@ export function ExportPanel({ frames }: ExportPanelProps) {
                   <FileImage className="w-4 h-4 mr-2" />
                   JPG
                 </Button>
+                <Button
+                  variant={format === "pptx" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFormat("pptx")}
+                  className="flex-1"
+                >
+                  <FileType className="w-4 h-4 mr-2" />
+                  PPTX
+                </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">导出方式</label>
-              <div className="flex gap-2">
-                <Button
-                  variant={mode === "zip" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setMode("zip")}
-                  className="flex-1"
-                >
-                  <FileArchive className="w-4 h-4 mr-2" />
-                  ZIP
-                </Button>
-                <Button
-                  variant={mode === "single" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setMode("single")}
-                  className="flex-1"
-                >
-                  <FileImage className="w-4 h-4 mr-2" />
-                  逐个
-                </Button>
+            {format !== "pptx" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">导出方式</label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={mode === "zip" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setMode("zip")}
+                    className="flex-1"
+                  >
+                    <FileArchive className="w-4 h-4 mr-2" />
+                    ZIP
+                  </Button>
+                  <Button
+                    variant={mode === "single" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setMode("single")}
+                    className="flex-1"
+                  >
+                    <FileImage className="w-4 h-4 mr-2" />
+                    逐个
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <DialogFooter>
