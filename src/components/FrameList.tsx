@@ -42,12 +42,12 @@ function FrameItem({
             ? "border-primary ring-2 ring-primary/20"
             : "border-transparent hover:border-muted-foreground/20"
         }`}
+        onClick={() => openPreview(index)}
       >
         <img
           src={frame.dataUrl}
           alt={`幻灯片 ${displayIndex}`}
-          className="w-full aspect-video object-cover cursor-pointer"
-          onClick={() => openPreview(index)}
+          className="w-full aspect-video object-cover"
         />
         {frame.selected && (
           <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center z-10 pointer-events-none">
@@ -61,7 +61,10 @@ function FrameItem({
             </span>
             <div className="flex gap-1">
               <button
-                onClick={() => toggleFrame(frame.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFrame(frame.id)
+                }}
                 className={`p-1 rounded-full ${
                   frame.selected
                     ? "bg-primary text-primary-foreground"
@@ -75,7 +78,10 @@ function FrameItem({
                 )}
               </button>
               <button
-                onClick={() => deleteFrame(frame.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  deleteFrame(frame.id)
+                }}
                 className="p-1 rounded-full bg-destructive/80 text-white hover:bg-destructive"
               >
                 <Trash2 className="w-2.5 h-2.5" />

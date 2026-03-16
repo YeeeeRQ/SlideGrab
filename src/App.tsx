@@ -30,11 +30,10 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto py-4 px-4">
-          <h1 className="text-2xl font-bold">视频PPT提取器</h1>
-          <p className="text-muted-foreground mt-1">
-            从视频中提取PPT幻灯片，导出为图片
-          </p>
+        <div className="container mx-auto py-2 px-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold">视频PPT提取器</h1>
+          </div>
         </div>
       </header>
 
