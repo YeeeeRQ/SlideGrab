@@ -86,7 +86,8 @@ function App() {
       </header>
 
       <main 
-        className="container mx-auto h-[calc(100vh-48px)] relative"
+        className="container mx-auto relative overflow-y-auto"
+        style={{ height: "calc(100vh - 48px)" }}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -107,8 +108,8 @@ function App() {
             </section>
           </div>
         ) : (
-          <div className="flex h-full">
-            <div className="flex-1 min-w-0 p-6 space-y-6 border-r">
+          <div className="flex flex-col min-[1400px]:flex-row h-full">
+            <div className="flex-1 min-w-0 p-6 space-y-6 border-b min-[1400px]:border-r min-[1400px]:border-b-0">
               <section className="min-w-0">
                 <div className="flex items-center justify-between mb-4 min-w-0">
                   <h2 className="text-lg font-semibold">视频</h2>
@@ -140,7 +141,7 @@ function App() {
               </section>
             </div>
 
-            <div className="w-[600px] flex flex-col bg-card">
+            <div className="w-full min-[1400px]:w-[600px] flex flex-col bg-card">
               <div className="p-4 border-b flex items-center justify-between">
                 <h2 className="text-lg font-semibold">
                   幻灯片管理
