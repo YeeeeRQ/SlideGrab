@@ -20,6 +20,7 @@ function App() {
   const [showChangeVideoDialog, setShowChangeVideoDialog] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null)
+  const [seekTime, setSeekTime] = useState<number | null>(null)
 
   const handleVideoSelect = (file: File) => {
     setVideoFile(file)
@@ -137,6 +138,8 @@ function App() {
                 <VideoPlayer
                   videoFile={videoFile}
                   onFramesExtracted={handleFramesExtracted}
+                  seekTime={seekTime}
+                  onSeekComplete={() => setSeekTime(null)}
                 />
               </section>
             </div>
@@ -152,7 +155,7 @@ function App() {
                 <ExportPanel frames={frames} />
               </div>
               <div className="flex-1 overflow-hidden">
-                <FrameList frames={frames} onFramesChange={handleFramesChange} />
+                <FrameList frames={frames} onFramesChange={handleFramesChange} onJumpToTime={setSeekTime} />
               </div>
             </div>
           </div>

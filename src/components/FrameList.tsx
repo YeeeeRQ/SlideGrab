@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
-import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, X } from "lucide-react"
+import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, X, SkipForward } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +14,7 @@ import {
 interface FrameListProps {
   frames: FrameData[]
   onFramesChange: (frames: FrameData[]) => void
+  onJumpToTime?: (time: number) => void
 }
 
 type SortOrder = "asc" | "desc"
@@ -28,6 +29,7 @@ interface FrameItemProps {
   deleteFrame: (id: string) => void
   openPreview: (index: number) => void
   viewMode: ViewMode
+  onJumpToTime?: (time: number) => void
 }
 
 function FrameItem({
@@ -39,6 +41,7 @@ function FrameItem({
   deleteFrame,
   openPreview,
   viewMode,
+  onJumpToTime,
 }: FrameItemProps) {
   const displayIndex = getDisplayIndex(frame.id)
 
@@ -68,6 +71,18 @@ function FrameItem({
               #{displayIndex}
             </span>
             <div className="flex gap-1">
+              {onJumpToTime && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onJumpToTime(frame.time)
+                  }}
+                  className="p-1 rounded-full bg-black/30 hover:bg-black/50 text-white"
+                  title="跳转至视频"
+                >
+                  <SkipForward className="w-2.5 h-2.5" />
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -127,6 +142,15 @@ function FrameItem({
         <span className="text-xs text-muted-foreground">{formatTime(frame.time)}</span>
       </div>
       <div className="col-span-2 flex items-center justify-end gap-1">
+        {onJumpToTime && (
+          <button
+            onClick={() => onJumpToTime(frame.time)}
+            className="p-1.5 rounded-full bg-black/20 hover:bg-black/40"
+            title="跳转至视频"
+          >
+            <SkipForward className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={() => toggleFrame(frame.id)}
           className={`p-1.5 rounded-full ${
@@ -154,7 +178,7 @@ function FrameItem({
   )
 }
 
-export function FrameList({ frames, onFramesChange }: FrameListProps) {
+export function FrameList({ frames, onFramesChange, onJumpToTime }: FrameListProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -389,6 +413,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                 deleteFrame={deleteFrame}
                 openPreview={openPreview}
                 viewMode={viewMode}
+                onJumpToTime={onJumpToTime}
               />
             ))}
           </div>
@@ -411,6 +436,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                 deleteFrame={deleteFrame}
                 openPreview={openPreview}
                 viewMode={viewMode}
+                onJumpToTime={onJumpToTime}
               />
             ))}
           </div>

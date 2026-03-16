@@ -33,6 +33,8 @@ import {
 interface VideoPlayerProps {
   videoFile: File | null;
   onFramesExtracted: (frames: FrameData[]) => void;
+  seekTime?: number | null;
+  onSeekComplete?: () => void;
 }
 
 type ExtractMode = "manual" | "auto";
@@ -62,6 +64,8 @@ const METHOD_OPTIONS: {
 export function VideoPlayer({
   videoFile,
   onFramesExtracted,
+  seekTime,
+  onSeekComplete,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const stopRef = useRef(false);
@@ -95,6 +99,13 @@ export function VideoPlayer({
     const saved = loadSettings();
     setSettings(saved);
   }, [loadSettings]);
+
+  useEffect(() => {
+    if (seekTime !== null && seekTime !== undefined && videoRef.current) {
+      videoRef.current.currentTime = seekTime;
+      onSeekComplete?.();
+    }
+  }, [seekTime, onSeekComplete]);
 
   useEffect(() => {
     if (videoFile && videoRef.current) {
