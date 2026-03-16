@@ -84,7 +84,8 @@ export function useSceneDetection() {
       video: HTMLVideoElement,
       onProgress?: (progress: number) => void,
       options: DetectionOptions = {},
-      onNewFrame?: (frame: FrameData) => void
+      onNewFrame?: (frame: FrameData) => void,
+      shouldStop?: () => boolean
     ): Promise<FrameData[]> => {
       const settings = { ...DEFAULT_SETTINGS, ...options }
       const {
@@ -113,6 +114,11 @@ export function useSceneDetection() {
 
       return new Promise((resolve) => {
         const processFrame = (time: number) => {
+          if (shouldStop?.()) {
+            resolve(frames)
+            return
+          }
+
           if (time >= duration || frames.length >= maxScreenshots) {
             resolve(frames)
             return

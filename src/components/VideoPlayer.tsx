@@ -13,6 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
   useSceneDetection,
   type FrameData,
   type DetectionMethod,
@@ -49,6 +59,7 @@ export function VideoPlayer({
   onFramesExtracted,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const stopRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -138,6 +149,7 @@ export function VideoPlayer({
     setIsExtracting(true);
     setExtractProgress(0);
     setExtractTime(null);
+    stopRef.current = false;
 
     if (videoRef.current.pause) {
       videoRef.current.pause();
@@ -155,6 +167,7 @@ export function VideoPlayer({
       (newFrame) => {
         onFramesExtracted([newFrame]);
       },
+      () => stopRef.current,
     );
 
     setIsExtracting(false);
@@ -252,7 +265,8 @@ export function VideoPlayer({
             <div className="relative">
               <Button
                 onClick={() => setShowSettings(!showSettings)}
-                variant={showSettings ? "default" : "outline"}
+                variant="outline"
+                className={showSettings ? "border-primary bg-accent" : ""}
               >
                 <Settings2 className="w-4 h-4 mr-2" />
                 {isExtracting ? "检测中..." : "设置"}
@@ -262,11 +276,6 @@ export function VideoPlayer({
                   }`}
                 />
               </Button>
-              {!isExtracting && extractTime !== null && (
-                <span className="ml-2 text-sm text-muted-foreground">
-                  (用时 {(extractTime / 1000).toFixed(1)}s)
-                </span>
-              )}
 
               {showSettings && (
               <div className="absolute bottom-full right-0 mb-2 w-80 bg-background border rounded-lg shadow-lg z-10 p-4 space-y-4">
@@ -399,12 +408,58 @@ export function VideoPlayer({
             )}
           </div>
 
-          <Button onClick={startAutoExtract} disabled={isExtracting}>
-            <Loader2
-              className={`w-4 h-4 mr-2 ${isExtracting ? "animate-spin" : ""}`}
-            />
-            {isExtracting ? "检测中..." : "开始检测"}
-          </Button>
+          <Dialog>
+            <Button onClick={startAutoExtract} disabled={isExtracting} className="gap-2">
+              <Loader2
+                className={`w-4 h-4 ${isExtracting ? "animate-spin" : ""}`}
+              />
+              {isExtracting ? "检测中..." : "开始检测"}
+            </Button>
+
+            {isExtracting && (
+              <DialogTrigger asChild>
+                <Button variant="destructive" className="gap-2">
+                  <X className="w-4 h-4" />
+                  停止
+                </Button>
+              </DialogTrigger>
+            )}
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>确认停止</DialogTitle>
+                <DialogDescription>
+                  确定要停止当前检测吗？已提取的帧将保留。
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">
+                    取消
+                  </Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      stopRef.current = true;
+                      setIsExtracting(false);
+                      if (videoRef.current) {
+                        videoRef.current.pause();
+                      }
+                    }}
+                  >
+                    确认停止
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+            {!isExtracting && extractTime !== null && (
+              <span className="text-sm text-muted-foreground">
+                (用时 {(extractTime / 1000).toFixed(1)}s)
+              </span>
+            )}
           </div>
         )}
       </div>
