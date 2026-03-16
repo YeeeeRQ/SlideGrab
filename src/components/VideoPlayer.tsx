@@ -28,6 +28,7 @@ export function VideoPlayer({ videoFile, onFramesExtracted }: VideoPlayerProps) 
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractProgress, setExtractProgress] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
+  const [extractTime, setExtractTime] = useState<number | null>(null)
 
   const [settings, setSettings] = useState<DetectionSettings>({
     method: "histogram",
@@ -100,8 +101,10 @@ export function VideoPlayer({ videoFile, onFramesExtracted }: VideoPlayerProps) 
   const startAutoExtract = useCallback(async () => {
     if (!videoRef.current) return
 
+    const startTime = Date.now()
     setIsExtracting(true)
     setExtractProgress(0)
+    setExtractTime(null)
 
     if (videoRef.current.pause) {
       videoRef.current.pause()
@@ -122,6 +125,7 @@ export function VideoPlayer({ videoFile, onFramesExtracted }: VideoPlayerProps) 
     )
 
     setIsExtracting(false)
+    setExtractTime(Date.now() - startTime)
   }, [detectScenes, onFramesExtracted, settings, saveSettings])
 
   const updateSetting = <K extends keyof DetectionSettings>(
@@ -210,6 +214,11 @@ export function VideoPlayer({ videoFile, onFramesExtracted }: VideoPlayerProps) 
               }`}
             />
           </Button>
+          {!isExtracting && extractTime !== null && (
+            <span className="ml-2 text-sm text-muted-foreground">
+              (用时 {(extractTime / 1000).toFixed(1)}s)
+            </span>
+          )}
 
           {showSettings && (
             <div className="absolute top-full right-0 mt-2 w-80 bg-background border rounded-lg shadow-lg z-10 p-4 space-y-4">
