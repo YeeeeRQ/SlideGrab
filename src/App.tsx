@@ -3,11 +3,21 @@ import { VideoUploader } from "./components/VideoUploader"
 import { VideoPlayer } from "./components/VideoPlayer"
 import { FrameList } from "./components/FrameList"
 import { ExportPanel } from "./components/ExportPanel"
+import { Button } from "./components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/ui/dialog"
 import type { FrameData } from "./hooks/useSceneDetection"
 
 function App() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [frames, setFrames] = useState<FrameData[]>([])
+  const [showChangeVideoDialog, setShowChangeVideoDialog] = useState(false)
 
   const handleVideoSelect = (file: File) => {
     setVideoFile(file)
@@ -52,7 +62,7 @@ function App() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">视频</h2>
                   <button
-                    onClick={handleReset}
+                    onClick={() => setShowChangeVideoDialog(true)}
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >
                     更换视频
@@ -94,6 +104,30 @@ function App() {
           </div>
         )}
       </main>
+
+      <Dialog open={showChangeVideoDialog} onOpenChange={setShowChangeVideoDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认更换视频</DialogTitle>
+            <DialogDescription>
+              更换视频将清除当前已提取的所有幻灯片，确定要继续吗？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowChangeVideoDialog(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                handleReset()
+                setShowChangeVideoDialog(false)
+              }}
+            >
+              确认更换
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
