@@ -7,9 +7,30 @@ export interface FrameData {
   selected: boolean
 }
 
-interface SceneDetectionOptions {
+export type DetectionMethod = "frame-diff" | "histogram" | "sampling"
+
+export interface DetectionOptions {
+  method?: DetectionMethod
   threshold?: number
   minInterval?: number
+  sampleInterval?: number
+  maxScreenshots?: number
+}
+
+export interface DetectionSettings {
+  method: DetectionMethod
+  threshold: number
+  minInterval: number
+  sampleInterval: number
+  maxScreenshots: number
+}
+
+const DEFAULT_SETTINGS: DetectionSettings = {
+  method: "histogram",
+  threshold: 0.12,
+  minInterval: 0.5,
+  sampleInterval: 3,
+  maxScreenshots: 256,
 }
 
 export function useSceneDetection() {
@@ -37,20 +58,43 @@ export function useSceneDetection() {
     []
   )
 
+  const loadSettings = useCallback((): DetectionSettings => {
+    try {
+      const saved = localStorage.getItem("detection-settings")
+      if (saved) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+      }
+    } catch (e) {
+      console.error("Failed to load settings:", e)
+    }
+    return DEFAULT_SETTINGS
+  }, [])
+
+  const saveSettings = useCallback((settings: DetectionSettings) => {
+    try {
+      localStorage.setItem("detection-settings", JSON.stringify(settings))
+    } catch (e) {
+      console.error("Failed to save settings:", e)
+    }
+  }, [])
+
   const detectScenes = useCallback(
     async (
       video: HTMLVideoElement,
       onProgress?: (progress: number) => void,
-      options: SceneDetectionOptions = {}
+      options: DetectionOptions = {}
     ): Promise<FrameData[]> => {
-      const { threshold = 0.3, minInterval = 0.5 } = options
+      const settings = { ...DEFAULT_SETTINGS, ...options }
+      const {
+        method,
+        threshold = 0.12,
+        minInterval = 0.5,
+        sampleInterval = 3,
+        maxScreenshots = 256,
+      } = settings
 
       const duration = video.duration
       const frames: FrameData[] = []
-      const sampleInterval = 0.5
-
-      let prevImageData: ImageData | null = null
-      let lastSceneTime = -minInterval
 
       const canvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d")!
@@ -59,12 +103,15 @@ export function useSceneDetection() {
       canvas.width = width
       canvas.height = width / aspectRatio
 
+      let prevImageData: ImageData | null = null
+      let lastSceneTime = -minInterval
+
       const totalSamples = Math.ceil(duration / sampleInterval)
       let currentSample = 0
 
       return new Promise((resolve) => {
         const processFrame = (time: number) => {
-          if (time >= duration) {
+          if (time >= duration || frames.length >= maxScreenshots) {
             resolve(frames)
             return
           }
@@ -79,7 +126,16 @@ export function useSceneDetection() {
             let isNewScene = false
 
             if (prevImageData && time - lastSceneTime >= minInterval) {
-              const diff = calculateFrameDifference(prevImageData, imageData)
+              let diff = 0
+
+              if (method === "frame-diff") {
+                diff = calculateFrameDifference(prevImageData, imageData)
+              } else if (method === "histogram") {
+                diff = calculateHistogramDifference(prevImageData, imageData)
+              } else if (method === "sampling") {
+                diff = 1
+              }
+
               if (diff > threshold) {
                 isNewScene = true
                 lastSceneTime = time
@@ -109,13 +165,16 @@ export function useSceneDetection() {
     []
   )
 
-  return { extractFrame, detectScenes }
+  return {
+    extractFrame,
+    detectScenes,
+    loadSettings,
+    saveSettings,
+    DEFAULT_SETTINGS,
+  }
 }
 
-function calculateFrameDifference(
-  img1: ImageData,
-  img2: ImageData
-): number {
+function calculateFrameDifference(img1: ImageData, img2: ImageData): number {
   const data1 = img1.data
   const data2 = img2.data
   let diff = 0
@@ -128,4 +187,26 @@ function calculateFrameDifference(
   }
 
   return diff / (img1.data.length / 4) / 255
+}
+
+function calculateHistogramDifference(img1: ImageData, img2: ImageData): number {
+  const data1 = img1.data
+  const data2 = img2.data
+  const totalPixels = img1.width * img1.height
+  const pixelThreshold = 30
+
+  let changedPixels = 0
+
+  for (let i = 0; i < data1.length; i += 4) {
+    const rDiff = Math.abs(data1[i] - data2[i])
+    const gDiff = Math.abs(data1[i + 1] - data2[i + 1])
+    const bDiff = Math.abs(data1[i + 2] - data2[i + 2])
+    const avgDiff = (rDiff + gDiff + bDiff) / 3
+
+    if (avgDiff > pixelThreshold) {
+      changedPixels++
+    }
+  }
+
+  return changedPixels / totalPixels
 }
