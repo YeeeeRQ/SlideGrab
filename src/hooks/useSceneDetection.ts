@@ -98,7 +98,7 @@ export function useSceneDetection() {
 
       const canvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d")!
-      const width = 320
+      const width = 1280
       const aspectRatio = video.videoWidth / video.videoHeight
       canvas.width = width
       canvas.height = width / aspectRatio

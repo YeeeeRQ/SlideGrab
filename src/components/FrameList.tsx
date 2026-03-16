@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Trash2, Check, X, ZoomIn } from "lucide-react"
+import { useState, useCallback } from "react"
+import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 
@@ -10,6 +10,10 @@ interface FrameListProps {
 
 export function FrameList({ frames, onFramesChange }: FrameListProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null)
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
   const toggleFrame = (id: string) => {
     onFramesChange(
@@ -36,22 +40,72 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
 
   const openPreview = (index: number) => {
     setPreviewIndex(index)
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
   }
 
   const closePreview = () => {
     setPreviewIndex(null)
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
   }
 
   const goToPrev = () => {
     if (previewIndex !== null && previewIndex > 0) {
       setPreviewIndex(previewIndex - 1)
+      setScale(1)
+      setPosition({ x: 0, y: 0 })
     }
   }
 
   const goToNext = () => {
     if (previewIndex !== null && previewIndex < frames.length - 1) {
       setPreviewIndex(previewIndex + 1)
+      setScale(1)
+      setPosition({ x: 0, y: 0 })
     }
+  }
+
+  const handleZoomIn = () => {
+    setScale((s) => Math.min(s + 0.25, 5))
+  }
+
+  const handleZoomOut = () => {
+    setScale((s) => Math.max(s - 0.25, 0.25))
+  }
+
+  const handleResetZoom = () => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    if (e.deltaY < 0) {
+      setScale((s) => Math.min(s + 0.1, 5))
+    } else {
+      setScale((s) => Math.max(s - 0.1, 0.25))
+    }
+  }, [])
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && scale > 1) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      })
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
   }
 
   if (frames.length === 0) {
@@ -138,53 +192,105 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
 
       {previewIndex !== null && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-black/95 z-50 flex flex-col"
           onClick={closePreview}
         >
-          <button
-            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full"
-            onClick={closePreview}
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center justify-between p-4 bg-black/50">
+            <div className="text-white">
+              <span className="font-medium">{previewIndex + 1} / {frames.length}</span>
+              <span className="ml-4 text-white/70">{formatTime(frames[previewIndex].time)}</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleZoomOut() }}
+                className="p-2 text-white hover:bg-white/20 rounded-full"
+                title="缩小"
+              >
+                <ZoomOut className="w-5 h-5" />
+              </button>
+              <span className="text-white w-16 text-center">
+                {Math.round(scale * 100)}%
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleZoomIn() }}
+                className="p-2 text-white hover:bg-white/20 rounded-full"
+                title="放大"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleResetZoom() }}
+                className="p-2 text-white hover:bg-white/20 rounded-full"
+                title="重置"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+              <div className="w-px h-6 bg-white/30 mx-2" />
+              <button
+                onClick={closePreview}
+                className="p-2 text-white hover:bg-white/20 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-          {previewIndex > 0 && (
-            <button
-              className="absolute left-4 p-2 text-white hover:bg-white/20 rounded-full"
-              onClick={(e) => {
-                e.stopPropagation()
-                goToPrev()
-              }}
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            {previewIndex > 0 && (
+              <button
+                className="absolute left-4 p-2 text-white/70 hover:bg-white/20 rounded-full z-10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToPrev()
+                }}
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+
+            {previewIndex < frames.length - 1 && (
+              <button
+                className="absolute right-4 p-2 text-white/70 hover:bg-white/20 rounded-full z-10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToNext()
+                }}
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+
+            <div
+              className="max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
             >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
+              <img
+                src={frames[previewIndex].dataUrl}
+                alt={`幻灯片 ${previewIndex + 1}`}
+                style={{
+                  transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                  maxHeight: 'calc(100vh - 120px)',
+                }}
+                className="object-contain select-none"
+                draggable={false}
+              />
+            </div>
+          </div>
 
-          {previewIndex < frames.length - 1 && (
-            <button
-              className="absolute right-4 p-2 text-white hover:bg-white/20 rounded-full"
-              onClick={(e) => {
-                e.stopPropagation()
-                goToNext()
-              }}
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-
-          <div className="text-center" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={frames[previewIndex].dataUrl}
-              alt={`幻灯片 ${previewIndex + 1}`}
-              className="max-h-[80vh] max-w-[90vw] object-contain rounded-lg"
-            />
-            <p className="text-white mt-4">
-              {previewIndex + 1} / {frames.length} · {formatTime(frames[previewIndex].time)}
-            </p>
+          <div className="p-2 bg-black/50 text-center text-white/50 text-xs">
+            滚轮缩放 · {scale > 1 ? '拖拽移动' : '点击查看'}
           </div>
         </div>
       )}
