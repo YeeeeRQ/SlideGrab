@@ -53,6 +53,11 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     return sortOrder === "asc" ? sorted : sorted.reverse()
   }, [frames, sortOrder])
 
+  const getDisplayIndex = (frameId: string) => {
+    const originalIndex = frames.findIndex(f => f.id === frameId)
+    return originalIndex + 1
+  }
+
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
   }
@@ -266,7 +271,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
               {frame.selected && (
                 <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                   <span className="text-xs text-primary-foreground font-medium">
-                    {index + 1}
+                    {getDisplayIndex(frame.id)}
                   </span>
                 </div>
               )}
@@ -290,11 +295,11 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                     : "border-border opacity-70"
                 }`}
               >
-                <div className="col-span-1 font-medium">{index + 1}</div>
+                <div className="col-span-1 font-medium">{getDisplayIndex(frame.id)}</div>
                 <div className="col-span-2">
                   <img
                     src={frame.dataUrl}
-                    alt={`幻灯片 ${index + 1}`}
+                    alt={`幻灯片 ${getDisplayIndex(frame.id)}`}
                     className="w-24 h-14 object-cover rounded"
                     onClick={() => openPreview(index)}
                   />
