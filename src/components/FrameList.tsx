@@ -2,6 +2,14 @@ import { useState, useMemo, useEffect } from "react"
 import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, X } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface FrameListProps {
   frames: FrameData[]
@@ -154,6 +162,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const toggleFrame = (id: string) => {
     onFramesChange(
@@ -358,8 +367,8 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
           <span className="text-xs text-muted-foreground">
             {selectedCount}/{frames.length}
           </span>
-          {selectedCount < frames.length && selectedCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={deleteUnselected} className="h-8 text-destructive">
+          {selectedCount < frames.length && (
+            <Button variant="ghost" size="sm" onClick={() => setShowDeleteDialog(true)} className="h-8 text-destructive">
               <Trash2 className="w-4 h-4" />
             </Button>
           )}
@@ -512,6 +521,31 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
           </div>
         </div>
       )}
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认清空</DialogTitle>
+            <DialogDescription>
+              确定要清空未选择的 {frames.length - selectedCount} 张幻灯片吗？此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteUnselected()
+                setShowDeleteDialog(false)
+              }}
+            >
+              确认清空
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

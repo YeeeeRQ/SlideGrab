@@ -7,7 +7,7 @@ export interface FrameData {
   selected: boolean
 }
 
-export type DetectionMethod = "frame-diff" | "histogram" | "sampling"
+export type DetectionMethod = "frame-diff" | "histogram" | "dhash"
 
 export interface DetectionOptions {
   method?: DetectionMethod
@@ -25,12 +25,22 @@ export interface DetectionSettings {
   maxScreenshots: number
 }
 
+export interface AlgorithmSettings {
+  threshold: number
+  minInterval: number
+  sampleInterval: number
+  maxScreenshots: number
+}
+
+const DEFAULT_ALGORITHM_SETTINGS: Record<DetectionMethod, AlgorithmSettings> = {
+  histogram: { threshold: 0.15, minInterval: 0.5, sampleInterval: 3, maxScreenshots: 256 },
+  "frame-diff": { threshold: 0.1, minInterval: 0.5, sampleInterval: 3, maxScreenshots: 256 },
+  dhash: { threshold: 0.06, minInterval: 0.5, sampleInterval: 3, maxScreenshots: 256 },
+}
+
 const DEFAULT_SETTINGS: DetectionSettings = {
-  method: "histogram",
-  threshold: 0.12,
-  minInterval: 0.5,
-  sampleInterval: 3,
-  maxScreenshots: 256,
+  method: "dhash",
+  ...DEFAULT_ALGORITHM_SETTINGS["dhash"],
 }
 
 export function useSceneDetection() {
@@ -63,7 +73,16 @@ export function useSceneDetection() {
     try {
       const saved = localStorage.getItem("detection-settings")
       if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+        const parsed = JSON.parse(saved)
+        const method = (parsed.method as DetectionMethod) || "dhash"
+        const methodSettings = parsed[method] || {}
+        return {
+          method,
+          threshold: methodSettings.threshold ?? DEFAULT_ALGORITHM_SETTINGS[method].threshold,
+          minInterval: methodSettings.minInterval ?? DEFAULT_ALGORITHM_SETTINGS[method].minInterval,
+          sampleInterval: methodSettings.sampleInterval ?? DEFAULT_ALGORITHM_SETTINGS[method].sampleInterval,
+          maxScreenshots: methodSettings.maxScreenshots ?? DEFAULT_ALGORITHM_SETTINGS[method].maxScreenshots,
+        }
       }
     } catch (e) {
       console.error("Failed to load settings:", e)
@@ -71,9 +90,39 @@ export function useSceneDetection() {
     return DEFAULT_SETTINGS
   }, [])
 
+  const loadAlgorithmSettings = useCallback((method: DetectionMethod): AlgorithmSettings => {
+    try {
+      const saved = localStorage.getItem("detection-settings")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const methodSettings = parsed[method]
+        if (methodSettings) {
+          return {
+            threshold: methodSettings.threshold ?? DEFAULT_ALGORITHM_SETTINGS[method].threshold,
+            minInterval: methodSettings.minInterval ?? DEFAULT_ALGORITHM_SETTINGS[method].minInterval,
+            sampleInterval: methodSettings.sampleInterval ?? DEFAULT_ALGORITHM_SETTINGS[method].sampleInterval,
+            maxScreenshots: methodSettings.maxScreenshots ?? DEFAULT_ALGORITHM_SETTINGS[method].maxScreenshots,
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load algorithm settings:", e)
+    }
+    return DEFAULT_ALGORITHM_SETTINGS[method]
+  }, [])
+
   const saveSettings = useCallback((settings: DetectionSettings) => {
     try {
-      localStorage.setItem("detection-settings", JSON.stringify(settings))
+      const existing = localStorage.getItem("detection-settings")
+      const allSettings = existing ? JSON.parse(existing) : {}
+      allSettings.method = settings.method
+      allSettings[settings.method] = {
+        threshold: settings.threshold,
+        minInterval: settings.minInterval,
+        sampleInterval: settings.sampleInterval,
+        maxScreenshots: settings.maxScreenshots,
+      }
+      localStorage.setItem("detection-settings", JSON.stringify(allSettings))
     } catch (e) {
       console.error("Failed to save settings:", e)
     }
@@ -140,8 +189,8 @@ export function useSceneDetection() {
                 diff = calculateFrameDifference(prevImageData, imageData)
               } else if (method === "histogram") {
                 diff = calculateHistogramDifference(prevImageData, imageData)
-              } else if (method === "sampling") {
-                diff = 1
+              } else if (method === "dhash") {
+                diff = calculateDHash(prevImageData, imageData)
               }
 
               if (diff > threshold) {
@@ -179,6 +228,7 @@ export function useSceneDetection() {
     extractFrame,
     detectScenes,
     loadSettings,
+    loadAlgorithmSettings,
     saveSettings,
     DEFAULT_SETTINGS,
   }
@@ -219,4 +269,71 @@ function calculateHistogramDifference(img1: ImageData, img2: ImageData): number 
   }
 
   return changedPixels / totalPixels
+}
+
+function calculateDHash(img1: ImageData, img2: ImageData): number {
+  const width = 9
+  const height = 8
+  
+  const canvas1 = document.createElement("canvas")
+  const canvas2 = document.createElement("canvas")
+  canvas1.width = width
+  canvas1.height = height
+  canvas2.width = width
+  canvas2.height = height
+  
+  const ctx1 = canvas1.getContext("2d")!
+  const ctx2 = canvas2.getContext("2d")!
+  
+  const tempCanvas = document.createElement("canvas")
+  tempCanvas.width = img1.width
+  tempCanvas.height = img1.height
+  const tempCtx = tempCanvas.getContext("2d")!
+  
+  tempCtx.putImageData(img1, 0, 0)
+  ctx1.drawImage(tempCanvas, 0, 0, width, height)
+  
+  tempCtx.putImageData(img2, 0, 0)
+  ctx2.drawImage(tempCanvas, 0, 0, width, height)
+  
+  const data1 = ctx1.getImageData(0, 0, width, height).data
+  const data2 = ctx2.getImageData(0, 0, width, height).data
+  
+  let hash1 = 0
+  let hash2 = 0
+  
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width - 1; x++) {
+      const idx = (y * width + x) * 4
+      const idxNext = (y * width + x + 1) * 4
+      
+      const gray = data1[idx] * 0.299 + data1[idx + 1] * 0.587 + data1[idx + 2] * 0.114
+      const grayNext = data1[idxNext] * 0.299 + data1[idxNext + 1] * 0.587 + data1[idxNext + 2] * 0.114
+      
+      hash1 = hash1 << 1
+      if (grayNext > gray) {
+        hash1 |= 1
+      }
+      
+      const gray2 = data2[idx] * 0.299 + data2[idx + 1] * 0.587 + data2[idx + 2] * 0.114
+      const grayNext2 = data2[idxNext] * 0.299 + data2[idxNext + 1] * 0.587 + data2[idxNext + 2] * 0.114
+      
+      hash2 = hash2 << 1
+      if (grayNext2 > gray2) {
+        hash2 |= 1
+      }
+    }
+  }
+  
+  const xor = hash1 ^ hash2
+  let hammingDistance = 0
+  let tempXor = xor
+  while (tempXor > 0) {
+    if (tempXor & 1) {
+      hammingDistance++
+    }
+    tempXor = tempXor >> 1
+  }
+  
+  return hammingDistance / 64
 }

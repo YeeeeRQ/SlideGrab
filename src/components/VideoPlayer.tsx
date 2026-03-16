@@ -52,7 +52,11 @@ const METHOD_OPTIONS: {
     label: "帧差分法",
     desc: "计算平均像素差异，适合快速切换",
   },
-  { value: "sampling", label: "固定采样", desc: "简单高效，按固定间隔提取" },
+  {
+    value: "dhash",
+    label: "差异哈希法",
+    desc: "基于图像指纹比对，检测精确",
+  },
 ];
 
 export function VideoPlayer({
@@ -83,8 +87,8 @@ export function VideoPlayer({
     extractFrame,
     detectScenes,
     loadSettings,
+    loadAlgorithmSettings,
     saveSettings,
-    DEFAULT_SETTINGS,
   } = useSceneDetection();
 
   useEffect(() => {
@@ -180,11 +184,24 @@ export function VideoPlayer({
     key: K,
     value: DetectionSettings[K],
   ) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    if (key === "method") {
+      const algoSettings = loadAlgorithmSettings(value as DetectionMethod)
+      setSettings((prev) => ({
+        ...prev,
+        method: value as DetectionMethod,
+        ...algoSettings,
+      }))
+    } else {
+      setSettings((prev) => ({ ...prev, [key]: value }))
+    }
   };
 
   const resetSettings = () => {
-    setSettings(DEFAULT_SETTINGS);
+    const algoSettings = loadAlgorithmSettings(settings.method)
+    setSettings({
+      method: settings.method,
+      ...algoSettings,
+    })
   };
 
   const formatTime = (time: number) => {

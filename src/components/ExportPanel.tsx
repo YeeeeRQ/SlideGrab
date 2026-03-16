@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Download, Loader2, FileImage, FileArchive, FileType } from "lucide-react"
+import { Download, Loader2, FileImage, FileType } from "lucide-react"
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
 import PptxGenJS from "pptxgenjs"
