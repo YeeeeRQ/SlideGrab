@@ -110,12 +110,18 @@ export function VideoPlayer({ videoFile, onFramesExtracted }: VideoPlayerProps) 
 
     saveSettings(settings)
 
-    const frames = await detectScenes(videoRef.current, (progress) => {
-      setExtractProgress(progress)
-    }, settings)
+    await detectScenes(
+      videoRef.current,
+      (progress) => {
+        setExtractProgress(progress)
+      },
+      settings,
+      (newFrame) => {
+        onFramesExtracted([newFrame])
+      }
+    )
 
     setIsExtracting(false)
-    onFramesExtracted(frames)
   }, [detectScenes, onFramesExtracted, settings, saveSettings])
 
   const updateSetting = <K extends keyof DetectionSettings>(

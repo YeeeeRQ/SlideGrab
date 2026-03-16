@@ -83,7 +83,8 @@ export function useSceneDetection() {
     async (
       video: HTMLVideoElement,
       onProgress?: (progress: number) => void,
-      options: DetectionOptions = {}
+      options: DetectionOptions = {},
+      onNewFrame?: (frame: FrameData) => void
     ): Promise<FrameData[]> => {
       const settings = { ...DEFAULT_SETTINGS, ...options }
       const {
@@ -145,12 +146,14 @@ export function useSceneDetection() {
 
             if (!prevImageData || isNewScene) {
               const dataUrl = canvas.toDataURL("image/jpeg", 0.95)
-              frames.push({
+              const newFrame: FrameData = {
                 id: `frame-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 time,
                 dataUrl,
                 selected: true,
-              })
+              }
+              frames.push(newFrame)
+              onNewFrame?.(newFrame)
             }
 
             prevImageData = imageData
