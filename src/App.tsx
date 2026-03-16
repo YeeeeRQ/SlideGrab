@@ -18,6 +18,8 @@ function App() {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [frames, setFrames] = useState<FrameData[]>([])
   const [showChangeVideoDialog, setShowChangeVideoDialog] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null)
 
   const handleVideoSelect = (file: File) => {
     setVideoFile(file)
@@ -37,6 +39,42 @@ function App() {
     setFrames([])
   }
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(true)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+      const file = files[0]
+      if (file.type.startsWith("video/")) {
+        if (videoFile) {
+          setPendingVideoFile(file)
+          setShowChangeVideoDialog(true)
+        } else {
+          handleVideoSelect(file)
+        }
+      }
+    }
+  }
+
   return (
     <div className="h-screen bg-background overflow-hidden">
       <header className="border-b bg-card h-12 flex-shrink-0">
@@ -47,7 +85,20 @@ function App() {
         </div>
       </header>
 
-      <main className="container mx-auto h-[calc(100vh-48px)]">
+      <main 
+        className="container mx-auto h-[calc(100vh-48px)] relative"
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragging && (
+          <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary z-50 flex items-center justify-center">
+            <div className="bg-background px-6 py-4 rounded-lg shadow-lg">
+              <p className="text-lg font-medium">释放以替换视频</p>
+            </div>
+          </div>
+        )}
         {!videoFile ? (
           <div className="max-w-xl mx-auto py-12 px-4">
             <section>
@@ -58,7 +109,7 @@ function App() {
         ) : (
           <div className="flex h-full">
             <div className="flex-1 p-6 space-y-6 border-r">
-              <section>
+              <section className="min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">视频</h2>
                   <button
@@ -68,9 +119,11 @@ function App() {
                     更换视频
                   </button>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium truncate">{videoFile.name}</p>
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg overflow-hidden">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate" title={videoFile.name}>
+                      {videoFile.name}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {(videoFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -114,13 +167,21 @@ function App() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowChangeVideoDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowChangeVideoDialog(false)
+              setPendingVideoFile(null)
+            }}>
               取消
             </Button>
             <Button
               onClick={() => {
-                handleReset()
+                if (pendingVideoFile) {
+                  handleVideoSelect(pendingVideoFile)
+                } else {
+                  handleReset()
+                }
                 setShowChangeVideoDialog(false)
+                setPendingVideoFile(null)
               }}
             >
               确认更换
