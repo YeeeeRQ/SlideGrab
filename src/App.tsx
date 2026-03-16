@@ -108,9 +108,9 @@ function App() {
           </div>
         ) : (
           <div className="flex h-full">
-            <div className="flex-1 p-6 space-y-6 border-r">
+            <div className="flex-1 min-w-0 p-6 space-y-6 border-r">
               <section className="min-w-0">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 min-w-0">
                   <h2 className="text-lg font-semibold">视频</h2>
                   <button
                     onClick={() => setShowChangeVideoDialog(true)}
@@ -119,7 +119,7 @@ function App() {
                     更换视频
                   </button>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg overflow-hidden">
+                <div className="flex items-center gap-4 p-4 bg-muted rounded-lg overflow-hidden min-w-0">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate" title={videoFile.name}>
                       {videoFile.name}
