@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, X } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
@@ -211,6 +211,16 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     setScale(1)
     setPosition({ x: 0, y: 0 })
   }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (previewIndex !== null && e.key === "Escape") {
+        closePreview()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [previewIndex])
 
   const goToPrev = () => {
     if (previewIndex !== null && previewIndex > 0) {
