@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List } from "lucide-react"
+import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, X } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 
@@ -439,7 +439,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                 onClick={closePreview}
                 className="p-2 text-white hover:bg-white/20 rounded-full"
               >
-                <ZoomIn className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
