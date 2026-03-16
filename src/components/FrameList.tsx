@@ -88,11 +88,13 @@ function SortableItem({
         <img
           src={frame.dataUrl}
           alt={`幻灯片 ${displayIndex}`}
-          className="w-full aspect-video object-cover"
+          className="w-full aspect-video object-cover cursor-pointer"
           onClick={() => openPreview(index)}
         />
         {frame.selected && (
-          <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center">
+          <div 
+            className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center z-10 pointer-events-none"
+          >
             <Check className="w-3 h-3 text-primary-foreground" />
           </div>
         )}
