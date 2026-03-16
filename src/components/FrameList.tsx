@@ -1,22 +1,5 @@
-import { useState, useCallback, useMemo } from "react"
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core"
-import type { DragEndEvent } from "@dnd-kit/core"
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List, GripVertical } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Trash2, Check, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal, ArrowUpDown, Grid, List } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 
@@ -28,7 +11,7 @@ interface FrameListProps {
 type SortOrder = "asc" | "desc"
 type ViewMode = "grid" | "list"
 
-interface SortableItemProps {
+interface FrameItemProps {
   frame: FrameData
   index: number
   getDisplayIndex: (id: string) => number
@@ -39,7 +22,7 @@ interface SortableItemProps {
   viewMode: ViewMode
 }
 
-function SortableItem({
+function FrameItem({
   frame,
   index,
   getDisplayIndex,
@@ -48,43 +31,18 @@ function SortableItem({
   deleteFrame,
   openPreview,
   viewMode,
-}: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: frame.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : "auto",
-  }
-
+}: FrameItemProps) {
   const displayIndex = getDisplayIndex(frame.id)
 
   if (viewMode === "grid") {
     return (
       <div
-        ref={setNodeRef}
-        style={style}
         className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer shadow-sm hover:shadow-md ${
           frame.selected
             ? "border-primary ring-2 ring-primary/20"
             : "border-transparent hover:border-muted-foreground/20"
         }`}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-1.5 left-1.5 z-10 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 bg-black/50 rounded"
-        >
-          <GripVertical className="w-3 h-3 text-white" />
-        </div>
         <img
           src={frame.dataUrl}
           alt={`幻灯片 ${displayIndex}`}
@@ -92,9 +50,7 @@ function SortableItem({
           onClick={() => openPreview(index)}
         />
         {frame.selected && (
-          <div 
-            className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center z-10 pointer-events-none"
-          >
+          <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center z-10 pointer-events-none">
             <Check className="w-3 h-3 text-primary-foreground" />
           </div>
         )}
@@ -103,7 +59,7 @@ function SortableItem({
             <span className="text-white text-xs font-medium">
               #{displayIndex}
             </span>
-            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <div className="flex gap-1">
               <button
                 onClick={() => toggleFrame(frame.id)}
                 className={`p-1 rounded-full ${
@@ -127,14 +83,15 @@ function SortableItem({
             </div>
           </div>
         </div>
+        <div className="absolute top-1.5 right-1.5 text-[10px] text-white/70 bg-black/50 px-1.5 py-0.5 rounded">
+          {formatTime(frame.time)}
+        </div>
       </div>
     )
   }
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
       className={`grid grid-cols-10 gap-2 px-2 py-1.5 items-center rounded-md border transition-all ${
         frame.selected
           ? "border-primary bg-primary/5"
@@ -142,13 +99,6 @@ function SortableItem({
       }`}
     >
       <div className="col-span-1 flex items-center gap-1">
-        <div
-          {...attributes}
-          {...listeners}
-          className="p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100"
-        >
-          <GripVertical className="w-3 h-3 text-muted-foreground" />
-        </div>
         <span className="text-sm">{displayIndex}</span>
       </div>
       <div className="col-span-3">
@@ -180,7 +130,7 @@ function SortableItem({
         </button>
         <button
           onClick={() => deleteFrame(frame.id)}
-          className="p-2 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          className="p-1.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
           title="删除"
         >
           <Trash2 className="w-4 h-4" />
@@ -199,47 +149,31 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
-
-  const toggleFrame = useCallback((id: string) => {
+  const toggleFrame = (id: string) => {
     onFramesChange(
       frames.map((f) => (f.id === id ? { ...f, selected: !f.selected } : f))
     )
-  }, [frames, onFramesChange])
+  }
 
-  const selectAll = useCallback(() => {
+  const selectAll = () => {
     onFramesChange(frames.map((f) => ({ ...f, selected: true })))
-  }, [frames, onFramesChange])
+  }
 
-  const deselectAll = useCallback(() => {
+  const deselectAll = () => {
     onFramesChange(frames.map((f) => ({ ...f, selected: false })))
-  }, [frames, onFramesChange])
+  }
 
-  const invertSelection = useCallback(() => {
+  const invertSelection = () => {
     onFramesChange(frames.map((f) => ({ ...f, selected: !f.selected })))
-  }, [frames, onFramesChange])
+  }
 
-  const deleteFrame = useCallback((id: string) => {
+  const deleteFrame = (id: string) => {
     onFramesChange(frames.filter((f) => f.id !== id))
-  }, [frames, onFramesChange])
+  }
 
-  const deleteUnselected = useCallback(() => {
+  const deleteUnselected = () => {
     onFramesChange(frames.filter((f) => f.selected))
-  }, [frames, onFramesChange])
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event
-    if (over && active.id !== over.id) {
-      const oldIndex = frames.findIndex((f) => f.id === active.id)
-      const newIndex = frames.findIndex((f) => f.id === over.id)
-      onFramesChange(arrayMove(frames, oldIndex, newIndex))
-    }
-  }, [frames, onFramesChange])
+  }
 
   const selectedCount = frames.filter((f) => f.selected).length
 
@@ -248,10 +182,10 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     return sortOrder === "asc" ? sorted : sorted.reverse()
   }, [frames, sortOrder])
 
-  const getDisplayIndex = useCallback((frameId: string) => {
+  const getDisplayIndex = (frameId: string) => {
     const originalIndex = frames.findIndex(f => f.id === frameId)
     return originalIndex + 1
-  }, [frames])
+  }
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
@@ -301,14 +235,14 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     setPosition({ x: 0, y: 0 })
   }
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     if (e.deltaY < 0) {
       setScale((s) => Math.min(s + 0.1, 5))
     } else {
       setScale((s) => Math.max(s - 0.1, 0.25))
     }
-  }, [])
+  }
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (scale > 1) {
@@ -417,56 +351,45 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={frames.map((f) => f.id)}
-            strategy={rectSortingStrategy}
-          >
-            {viewMode === "grid" ? (
-              <div className="grid grid-cols-3 gap-3">
-                {sortedFrames.map((frame, index) => (
-                  <SortableItem
-                    key={frame.id}
-                    frame={frame}
-                    index={index}
-                    getDisplayIndex={getDisplayIndex}
-                    formatTime={formatTime}
-                    toggleFrame={toggleFrame}
-                    deleteFrame={deleteFrame}
-                    openPreview={openPreview}
-                    viewMode={viewMode}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="grid grid-cols-10 gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
-                  <div className="col-span-1">#</div>
-                  <div className="col-span-3">缩略图</div>
-                  <div className="col-span-4">时间</div>
-                  <div className="col-span-2 text-right">操作</div>
-                </div>
-                {sortedFrames.map((frame, index) => (
-                  <SortableItem
-                    key={frame.id}
-                    frame={frame}
-                    index={index}
-                    getDisplayIndex={getDisplayIndex}
-                    formatTime={formatTime}
-                    toggleFrame={toggleFrame}
-                    deleteFrame={deleteFrame}
-                    openPreview={openPreview}
-                    viewMode={viewMode}
-                  />
-                ))}
-              </div>
-            )}
-          </SortableContext>
-        </DndContext>
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-3 gap-3">
+            {sortedFrames.map((frame, index) => (
+              <FrameItem
+                key={frame.id}
+                frame={frame}
+                index={index}
+                getDisplayIndex={getDisplayIndex}
+                formatTime={formatTime}
+                toggleFrame={toggleFrame}
+                deleteFrame={deleteFrame}
+                openPreview={openPreview}
+                viewMode={viewMode}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <div className="grid grid-cols-10 gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+              <div className="col-span-1">#</div>
+              <div className="col-span-3">缩略图</div>
+              <div className="col-span-4">时间</div>
+              <div className="col-span-2 text-right">操作</div>
+            </div>
+            {sortedFrames.map((frame, index) => (
+              <FrameItem
+                key={frame.id}
+                frame={frame}
+                index={index}
+                getDisplayIndex={getDisplayIndex}
+                formatTime={formatTime}
+                toggleFrame={toggleFrame}
+                deleteFrame={deleteFrame}
+                openPreview={openPreview}
+                viewMode={viewMode}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {previewIndex !== null && (
@@ -510,7 +433,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                 onClick={closePreview}
                 className="p-2 text-white hover:bg-white/20 rounded-full"
               >
-                <X className="w-5 h-5" />
+                <ZoomIn className="w-5 h-5" />
               </button>
             </div>
           </div>
