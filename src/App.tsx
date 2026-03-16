@@ -29,7 +29,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
+      <header className="border-b bg-card">
         <div className="container mx-auto py-4 px-4">
           <h1 className="text-2xl font-bold">视频PPT提取器</h1>
           <p className="text-muted-foreground mt-1">
@@ -38,17 +38,17 @@ function App() {
         </div>
       </header>
 
-      <main className="container mx-auto py-6 px-4">
+      <main className="container mx-auto">
         {!videoFile ? (
-          <div className="max-w-xl mx-auto">
+          <div className="max-w-xl mx-auto py-12 px-4">
             <section>
               <h2 className="text-lg font-semibold mb-4">上传视频</h2>
               <VideoUploader onVideoSelect={handleVideoSelect} />
             </section>
           </div>
         ) : (
-          <div className="flex gap-6">
-            <div className="flex-1 space-y-6">
+          <div className="flex min-h-[calc(100vh-100px)]">
+            <div className="flex-1 p-6 space-y-6 border-r">
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">视频</h2>
@@ -61,7 +61,7 @@ function App() {
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
                   <div className="flex-1">
-                    <p className="font-medium">{videoFile.name}</p>
+                    <p className="font-medium truncate">{videoFile.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {(videoFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -82,11 +82,18 @@ function App() {
               </section>
             </div>
 
-            <div className="w-[400px] flex-shrink-0">
-              <h2 className="text-lg font-semibold mb-4">
-                幻灯片管理 ({frames.length}张)
-              </h2>
-              <FrameList frames={frames} onFramesChange={handleFramesChange} />
+            <div className="w-[600px] flex flex-col bg-card">
+              <div className="p-4 border-b">
+                <h2 className="text-lg font-semibold">
+                  幻灯片管理
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({frames.length}张)
+                  </span>
+                </h2>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <FrameList frames={frames} onFramesChange={handleFramesChange} />
+              </div>
             </div>
           </div>
         )}

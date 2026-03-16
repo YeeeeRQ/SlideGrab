@@ -72,18 +72,18 @@ function SortableItem({
       <div
         ref={setNodeRef}
         style={style}
-        className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+        className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-pointer shadow-sm hover:shadow-md ${
           frame.selected
-            ? "border-primary"
-            : "border-transparent opacity-60"
+            ? "border-primary ring-2 ring-primary/20"
+            : "border-transparent hover:border-muted-foreground/20"
         }`}
       >
         <div
           {...attributes}
           {...listeners}
-          className="absolute top-2 left-2 z-10 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 bg-black/50 rounded"
+          className="absolute top-1.5 left-1.5 z-10 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 bg-black/50 rounded"
         >
-          <GripVertical className="w-4 h-4 text-white" />
+          <GripVertical className="w-3 h-3 text-white" />
         </div>
         <img
           src={frame.dataUrl}
@@ -91,43 +91,40 @@ function SortableItem({
           className="w-full aspect-video object-cover"
           onClick={() => openPreview(index)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <span className="text-white text-xs">
-              #{displayIndex} {formatTime(frame.time)}
-            </span>
-            <ZoomIn className="w-4 h-4 text-white" />
-          </div>
-          <div className="absolute top-2 right-2 flex gap-1" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => toggleFrame(frame.id)}
-              className={`p-1.5 rounded-full ${
-                frame.selected
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/80 hover:bg-white"
-              }`}
-            >
-              {frame.selected ? (
-                <Check className="w-3 h-3" />
-              ) : (
-                <X className="w-3 h-3" />
-              )}
-            </button>
-            <button
-              onClick={() => deleteFrame(frame.id)}
-              className="p-1.5 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
         {frame.selected && (
-          <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-xs text-primary-foreground font-medium">
-              {displayIndex}
-            </span>
+          <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded bg-primary flex items-center justify-center">
+            <Check className="w-3 h-3 text-primary-foreground" />
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-1.5 left-1.5 right-1.5 flex items-center justify-between">
+            <span className="text-white text-xs font-medium">
+              #{displayIndex}
+            </span>
+            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => toggleFrame(frame.id)}
+                className={`p-1 rounded-full ${
+                  frame.selected
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-white/80 hover:bg-white"
+                }`}
+              >
+                {frame.selected ? (
+                  <Check className="w-2.5 h-2.5" />
+                ) : (
+                  <Square className="w-2.5 h-2.5" />
+                )}
+              </button>
+              <button
+                onClick={() => deleteFrame(frame.id)}
+                className="p-1 rounded-full bg-destructive/80 text-white hover:bg-destructive"
+              >
+                <Trash2 className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -136,43 +133,37 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-12 gap-4 px-4 py-2 items-center rounded-lg border-2 transition-all ${
+      className={`grid grid-cols-10 gap-2 px-2 py-1.5 items-center rounded-md border transition-all ${
         frame.selected
           ? "border-primary bg-primary/5"
-          : "border-border opacity-70"
+          : "border-transparent hover:bg-muted/50"
       }`}
     >
-      <div className="col-span-1 flex items-center gap-2">
+      <div className="col-span-1 flex items-center gap-1">
         <div
           {...attributes}
           {...listeners}
-          className="p-1 cursor-grab active:cursor-grabbing"
+          className="p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100"
         >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+          <GripVertical className="w-3 h-3 text-muted-foreground" />
         </div>
-        <span className="font-medium">{displayIndex}</span>
+        <span className="text-sm">{displayIndex}</span>
       </div>
-      <div className="col-span-2">
+      <div className="col-span-3">
         <img
           src={frame.dataUrl}
           alt={`幻灯片 ${displayIndex}`}
-          className="w-24 h-14 object-cover rounded cursor-pointer"
+          className="w-16 h-10 object-cover rounded cursor-pointer"
           onClick={() => openPreview(index)}
         />
       </div>
-      <div className="col-span-6 flex items-center gap-4">
-        <span className="text-sm">{formatTime(frame.time)}</span>
-        <button
-          onClick={() => openPreview(index)}
-          className="text-sm text-primary hover:underline"
-        >
-          预览
-        </button>
+      <div className="col-span-4 flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">{formatTime(frame.time)}</span>
       </div>
-      <div className="col-span-3 flex items-center justify-end gap-2">
+      <div className="col-span-2 flex items-center justify-end gap-1">
         <button
           onClick={() => toggleFrame(frame.id)}
-          className={`p-2 rounded-full ${
+          className={`p-1.5 rounded-full ${
             frame.selected
               ? "bg-primary text-primary-foreground"
               : "bg-muted hover:bg-muted/80"
@@ -339,86 +330,91 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
 
   if (frames.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>暂无提取的幻灯片</p>
-        <p className="text-sm mt-1">请先上传视频并提取幻灯片</p>
+      <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <p className="font-medium">暂无幻灯片</p>
+        <p className="text-sm mt-1">点击上方"自动检测"提取幻灯片</p>
       </div>
     )
   }
 
   return (
-    <>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              已提取 {frames.length} 张幻灯片，已选择 {selectedCount} 张
-            </p>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={selectAll}
-                title="全选"
-              >
-                <CheckSquare className="w-4 h-4 mr-1" />
-                全选
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={deselectAll}
-                title="取消全选"
-              >
-                <Square className="w-4 h-4 mr-1" />
-                取消
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={invertSelection}
-                title="反选"
-              >
-                <FlipHorizontal className="w-4 h-4 mr-1" />
-                反选
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-              title={sortOrder === "asc" ? "正序" : "倒序"}
-            >
-              <ArrowUpDown className="w-4 h-4 mr-1" />
-              {sortOrder === "asc" ? "正序" : "倒序"}
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              title="网格视图"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              title="列表视图"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-            {selectedCount < frames.length && (
-              <Button variant="ghost" size="sm" onClick={deleteUnselected}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                删除未选择
-              </Button>
-            )}
-          </div>
+    <div className="h-full flex flex-col">
+      <div className="p-3 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={selectAll}
+            title="全选"
+            className="h-8"
+          >
+            <CheckSquare className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={deselectAll}
+            title="取消全选"
+            className="h-8"
+          >
+            <Square className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={invertSelection}
+            title="反选"
+            className="h-8"
+          >
+            <FlipHorizontal className="w-4 h-4" />
+          </Button>
+          <div className="w-px h-5 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+            title={sortOrder === "asc" ? "正序" : "倒序"}
+            className="h-8"
+          >
+            <ArrowUpDown className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            title="网格视图"
+            className="h-8"
+          >
+            <Grid className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+            title="列表视图"
+            className="h-8"
+          >
+            <List className="w-4 h-4" />
+          </Button>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {selectedCount}/{frames.length}
+          </span>
+          {selectedCount < frames.length && selectedCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={deleteUnselected} className="h-8 text-destructive">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto p-4">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -429,7 +425,7 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
             strategy={rectSortingStrategy}
           >
             {viewMode === "grid" ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 {sortedFrames.map((frame, index) => (
                   <SortableItem
                     key={frame.id}
@@ -445,12 +441,12 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
                 ))}
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+              <div className="space-y-1">
+                <div className="grid grid-cols-10 gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
                   <div className="col-span-1">#</div>
-                  <div className="col-span-2">缩略图</div>
-                  <div className="col-span-6">时间</div>
-                  <div className="col-span-3 text-right">操作</div>
+                  <div className="col-span-3">缩略图</div>
+                  <div className="col-span-4">时间</div>
+                  <div className="col-span-2 text-right">操作</div>
                 </div>
                 {sortedFrames.map((frame, index) => (
                   <SortableItem
@@ -575,6 +571,6 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
