@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
+import { Trash2, Check, X, ZoomIn, ZoomOut, RotateCcw, CheckSquare, Square, FlipHorizontal } from "lucide-react"
 import type { FrameData } from "@/hooks/useSceneDetection"
 import { Button } from "@/components/ui/button"
 
@@ -19,6 +19,18 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     onFramesChange(
       frames.map((f) => (f.id === id ? { ...f, selected: !f.selected } : f))
     )
+  }
+
+  const selectAll = () => {
+    onFramesChange(frames.map((f) => ({ ...f, selected: true })))
+  }
+
+  const deselectAll = () => {
+    onFramesChange(frames.map((f) => ({ ...f, selected: false })))
+  }
+
+  const invertSelection = () => {
+    onFramesChange(frames.map((f) => ({ ...f, selected: !f.selected })))
   }
 
   const deleteFrame = (id: string) => {
@@ -121,9 +133,40 @@ export function FrameList({ frames, onFramesChange }: FrameListProps) {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            已提取 {frames.length} 张幻灯片，已选择 {selectedCount} 张
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              已提取 {frames.length} 张幻灯片，已选择 {selectedCount} 张
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={selectAll}
+                title="全选"
+              >
+                <CheckSquare className="w-4 h-4 mr-1" />
+                全选
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={deselectAll}
+                title="取消全选"
+              >
+                <Square className="w-4 h-4 mr-1" />
+                取消
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={invertSelection}
+                title="反选"
+              >
+                <FlipHorizontal className="w-4 h-4 mr-1" />
+                反选
+              </Button>
+            </div>
+          </div>
           {selectedCount < frames.length && (
             <Button variant="ghost" size="sm" onClick={deleteUnselected}>
               <Trash2 className="w-4 h-4 mr-2" />
