@@ -8,6 +8,7 @@ import {
   ChevronDown,
   X,
   Zap,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,7 @@ export function VideoPlayer({
   const [showSettings, setShowSettings] = useState(false);
   const [extractTime, setExtractTime] = useState<number | null>(null);
   const [mode, setMode] = useState<ExtractMode>("auto");
+  const [jumpTime, setJumpTime] = useState("");
 
   const [settings, setSettings] = useState<DetectionSettings>({
     method: "histogram",
@@ -191,6 +193,27 @@ export function VideoPlayer({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  const parseTime = (timeStr: string): number | null => {
+    const parts = timeStr.split(":");
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parseFloat(parts[1]);
+      if (!isNaN(minutes) && !isNaN(seconds)) {
+        return minutes * 60 + seconds;
+      }
+    }
+    return null;
+  };
+
+  const handleJumpByTime = () => {
+    const time = parseTime(jumpTime);
+    if (time !== null && videoRef.current) {
+      videoRef.current.currentTime = Math.min(time, duration);
+      setCurrentTime(videoRef.current.currentTime);
+      setJumpTime("");
+    }
+  };
+
   if (!videoFile) return null;
 
   return (
@@ -256,10 +279,30 @@ export function VideoPlayer({
         </Button>
 
         {mode === "manual" ? (
-          <Button onClick={extractCurrentFrame} variant="outline">
-            <SkipForward className="w-4 h-4 mr-2" />
-            提取当前帧
-          </Button>
+          <>
+            <div className="flex items-center gap-2">
+              <Button onClick={extractCurrentFrame} variant="outline">
+                <SkipForward className="w-4 h-4 mr-2" />
+                提取当前帧
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <div className="relative">
+                <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="时间如 01:30"
+                  value={jumpTime}
+                  onChange={(e) => setJumpTime(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleJumpByTime()}
+                  className="w-32 pl-8"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={handleJumpByTime}>
+                跳转
+              </Button>
+            </div>
+          </>
         ) : (
           <div className="flex items-center gap-2">
             <div className="relative">

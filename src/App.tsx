@@ -28,16 +28,16 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto py-2 px-4 flex items-center justify-between">
+    <div className="h-screen bg-background overflow-hidden">
+      <header className="border-b bg-card h-12 flex-shrink-0">
+        <div className="container mx-auto h-full px-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold">视频PPT提取器</h1>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto">
+      <main className="container mx-auto h-[calc(100vh-48px)]">
         {!videoFile ? (
           <div className="max-w-xl mx-auto py-12 px-4">
             <section>
@@ -46,7 +46,7 @@ function App() {
             </section>
           </div>
         ) : (
-          <div className="flex min-h-[calc(100vh-100px)]">
+          <div className="flex h-full">
             <div className="flex-1 p-6 space-y-6 border-r">
               <section>
                 <div className="flex items-center justify-between mb-4">
